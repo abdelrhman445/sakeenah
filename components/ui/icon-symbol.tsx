@@ -24,6 +24,7 @@ const MAPPING = {
   'star.fill': 'star',
   'info.circle.fill': 'info',
   'location.north.line.fill': 'explore',
+  'book.fill': 'menu-book',
   xmark: 'close',
 } as IconMapping;
 

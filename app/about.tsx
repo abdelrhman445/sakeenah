@@ -18,14 +18,14 @@ export default function AboutScreen() {
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-        onPress={() => WebBrowser.openBrowserAsync('https://example.com/privacy')}
+        onPress={() => WebBrowser.openBrowserAsync('https://portfolio.nullspecteracademy.ninja/')}
       >
         <Text style={[styles.buttonText, { color: colors.text }]}>سياسة الخصوصية</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-        onPress={() => Linking.openURL('mailto:support@example.com')}
+        onPress={() => Linking.openURL('mailto:boodapro540@gmail.com')}
       >
         <Text style={[styles.buttonText, { color: colors.text }]}>تواصل معنا</Text>
       </TouchableOpacity>

@@ -5,6 +5,11 @@ import { Platform } from 'react-native';
 
 export type PrayerName = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 
+// نفس فكرة القناة في lib/notifications.ts: قنوات أندرويد ثابتة مش
+// بتتحدّث لأي حد عنده نسخة قديمة مثبتة قناة قديمة من غير صوت. القناة دي
+// مخصصة لتنبيهات مواعيد الصلاة وبتتنشئ بإعدادات الصوت الصح من أول مرة.
+const PRAYER_ANDROID_CHANNEL_ID = 'prayer-times-v2';
+
 type Coords = { latitude: number; longitude: number };
 type Timing = { name: PrayerName; label: string; time: string };
 
@@ -162,6 +167,16 @@ export async function schedulePrayerNotifications(): Promise<boolean> {
     const timings = await getTodayTimings();
     if (!timings) return false;
 
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync(PRAYER_ANDROID_CHANNEL_ID, {
+        name: 'مواعيد الصلاة',
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: 'default',
+        vibrationPattern: [0, 250, 250, 250],
+        enableVibrate: true,
+      });
+    }
+
     // Clear any previously scheduled prayer notifications before re-scheduling.
     await Notifications.cancelAllScheduledNotificationsAsync();
 
@@ -176,7 +191,8 @@ export async function schedulePrayerNotifications(): Promise<boolean> {
         content: {
           title: `حان الآن وقت صلاة ${t.label}`,
           body: `الساعة ${t.time}`,
-          sound: true,
+          sound: 'default',
+          ...(Platform.OS === 'android' ? { channelId: PRAYER_ANDROID_CHANNEL_ID } : {}),
         },
         trigger: {
           type: Notifications.SchedulableTriggerInputTypes.DATE,

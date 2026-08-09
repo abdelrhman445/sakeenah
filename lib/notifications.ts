@@ -61,11 +61,19 @@ export async function getReminderTime(
   return DEFAULT_TIME[type];
 }
 
+// اسم القناة اتغيّر بـ v2 عشان قنوات أندرويد ثابتة مش بتتحدّث لأي حد
+// عنده نسخة قديمة مثبتة القناة القديمة من غير صوت — القناة الجديدة
+// بتتنشئ بإعدادات الصوت الصح من أول مرة.
+const ANDROID_CHANNEL_ID = 'azkar-reminders-v2';
+
 async function scheduleAt(type: ReminderType, hour: number, minute: number): Promise<string> {
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('azkar-reminders', {
+    await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
       name: 'تذكير الأذكار',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: 'default',
+      vibrationPattern: [0, 250, 250, 250],
+      enableVibrate: true,
     });
   }
 
@@ -79,7 +87,8 @@ async function scheduleAt(type: ReminderType, hour: number, minute: number): Pro
     content: {
       title: content.title,
       body: content.body,
-      sound: true,
+      sound: 'default',
+      ...(Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : {}),
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,

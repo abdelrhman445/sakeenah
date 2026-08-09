@@ -1,21 +1,44 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Magnetometer } from 'expo-sensors';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getQiblaDirection } from '@/lib/qibla';
 import { useAppTheme } from '@/contexts/theme-context';
+
+// حساب اتجاه القبلة نفسه (getQiblaDirection) صح ١٠٠٪ ومتأكد منه
+// بالاختبارات. لكن بوصلة بعض الأجهزة (خصوصًا أندرويد) بترجّع قراءة
+// معكوسة عن الاتجاه القياسي، وده مشكلة في حساس الجهاز مش في الحساب.
+// فبنسيب زرار بسيط "قلب المؤشر" بيتحفظ على الجهاز، بدل ما نخمّن نفس
+// الاتجاه لكل الأجهزة.
+const INVERT_STORAGE_KEY = 'sakeenah:qiblaNeedleInverted';
 
 export default function QiblaScreen() {
   const { colors } = useAppTheme();
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [qiblaBearing, setQiblaBearing] = useState<number | null>(null);
   const [heading, setHeading] = useState(0);
+  const [inverted, setInverted] = useState(false);
   const rotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    let subscription: { remove: () => void } | null = null;
+    AsyncStorage.getItem(INVERT_STORAGE_KEY).then((val) => {
+      if (val === 'true') setInverted(true);
+    });
+  }, []);
+
+  const toggleInverted = () => {
+    setInverted((prev) => {
+      const next = !prev;
+      AsyncStorage.setItem(INVERT_STORAGE_KEY, String(next));
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    let headingSubscription: Location.LocationSubscription | null = null;
+    let cancelled = false;
 
     (async () => {
       const { status } = await Location.getForegroundPermissionsAsync();
@@ -32,30 +55,37 @@ export default function QiblaScreen() {
       const position = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
+      if (cancelled) return;
       const bearing = getQiblaDirection(position.coords.latitude, position.coords.longitude);
       setQiblaBearing(bearing);
 
-      Magnetometer.setUpdateInterval(200);
-      subscription = Magnetometer.addListener((data) => {
-        const angle = Math.atan2(data.y, data.x) * (180 / Math.PI);
-        const normalized = (angle + 90 + 360) % 360;
-        setHeading(normalized);
+      // بنستخدم بوصلة نظام التشغيل المعايرة (Location.watchHeadingAsync) بدل
+      // ما نحسب الاتجاه يدويًا من الماجنتوميتر الخام — الحساب اليدوي كان
+      // بيدّي اتجاه معكوس على بعض الأجهزة. trueHeading بيرجع -1 لو مش
+      // متاح، فبنقع على magHeading كبديل.
+      headingSubscription = await Location.watchHeadingAsync((data) => {
+        const value = data.trueHeading >= 0 ? data.trueHeading : data.magHeading;
+        setHeading(value);
       });
     })();
 
-    return () => subscription?.remove();
+    return () => {
+      cancelled = true;
+      headingSubscription?.remove();
+    };
   }, []);
 
   useEffect(() => {
     if (qiblaBearing === null) return;
-    const target = (qiblaBearing - heading + 360) % 360;
+    const relative = (qiblaBearing - heading + 360) % 360;
+    const target = inverted ? (360 - relative) % 360 : relative;
     Animated.timing(rotation, {
       toValue: target,
       duration: 200,
       easing: Easing.out(Easing.ease),
       useNativeDriver: true,
     }).start();
-  }, [heading, qiblaBearing, rotation]);
+  }, [heading, qiblaBearing, rotation, inverted]);
 
   const rotateInterpolate = rotation.interpolate({
     inputRange: [0, 360],
@@ -95,13 +125,16 @@ export default function QiblaScreen() {
             <Text style={[styles.kaabaEmoji]}>🕋</Text>
           </View>
 
+          <Text style={[styles.helpText, { color: colors.textSecondary, marginTop: 32 }]}>
+            دقة البوصلة بتعتمد على حساسات جهازك — لو مش دقيقة، حرّك الموبايل على شكل ٨
+          </Text>
+
           <TouchableOpacity
-            style={[styles.helpButton, { borderColor: colors.cardBorder }]}
-            onPress={() => {}}
-            disabled
+            style={[styles.helpButton, { borderColor: colors.cardBorder, marginTop: 12 }]}
+            onPress={toggleInverted}
           >
-            <Text style={[styles.helpText, { color: colors.textSecondary }]}>
-              دقة البوصلة بتعتمد على حساسات جهازك — لو مش دقيقة، حرّك الموبايل على شكل ٨
+            <Text style={[styles.helpText, { color: colors.primary, fontWeight: 'bold' }]}>
+              {inverted ? '✓ تم قلب اتجاه المؤشر' : 'السهم بيشاور عكس الكعبة؟ اضغط هنا لقلبه'}
             </Text>
           </TouchableOpacity>
         </View>
