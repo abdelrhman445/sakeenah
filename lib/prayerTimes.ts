@@ -196,6 +196,56 @@ export async function schedulePrayerNotifications(): Promise<boolean> {
   }
 }
 
+// ---------- Next prayer helper ----------
+
+export type NextPrayerInfo = {
+  current: Timing | null;
+  next: Timing;
+  minutesRemaining: number;
+};
+
+/**
+ * بيرجع الصلاة الجاية من قائمة مواعيد اليوم، مع دقايق العد التنازلي.
+ * لو كل صلوات اليوم فاتت (يعني إحنا بعد العشاء)، بيرجع فجر بكرة كتقدير تقريبي.
+ */
+export function getNextPrayer(timings: Timing[], now: Date = new Date()): NextPrayerInfo | null {
+  if (timings.length === 0) return null;
+
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const toMinutes = (time: string): number | null => {
+    const match = time.match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return null;
+    return Number(match[1]) * 60 + Number(match[2]);
+  };
+
+  let previous: Timing | null = null;
+  for (let i = 0; i < timings.length; i++) {
+    const minutes = toMinutes(timings[i].time);
+    if (minutes === null) continue;
+
+    if (minutes > nowMinutes) {
+      return {
+        current: previous,
+        next: timings[i],
+        minutesRemaining: minutes - nowMinutes,
+      };
+    }
+    previous = timings[i];
+  }
+
+  // كل صلوات اليوم فاتت — الصلاة الجاية هي فجر بكرة (24 ساعة من نفس التوقيت).
+  const fajr = timings[0];
+  const fajrMinutes = toMinutes(fajr.time);
+  const minutesRemaining = fajrMinutes === null ? 0 : 24 * 60 - nowMinutes + fajrMinutes;
+
+  return {
+    current: timings[timings.length - 1],
+    next: fajr,
+    minutesRemaining,
+  };
+}
+
 export async function disablePrayerNotifications(): Promise<void> {
   try {
     await Notifications.cancelAllScheduledNotificationsAsync();

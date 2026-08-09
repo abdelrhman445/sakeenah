@@ -1,50 +1,77 @@
-# Welcome to your Expo app 👋
+# سكينة (Sakeenah)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+تطبيق موبايل بسيط لأذكار الصباح والمساء، مواعيد الصلاة، واتجاه القبلة — مبني بـ [Expo](https://expo.dev) و [expo-router](https://docs.expo.dev/router/introduction).
 
-## Get started
+## الفيتشرز
 
-1. Install dependencies
+- أذكار الصباح والمساء والنوم والتسبيح، وبعد الصلاة، ودعاء الكرب — مع عداد تكرار وفضل كل ذكر.
+- ستريك مستقل لكل من الصباح والمساء.
+- مفضلة وبحث في كل الأذكار.
+- مواعيد الصلاة (Aladhan API) مع عداد تنازلي للصلاة الجاية وتذكيرات.
+- اتجاه القبلة (بوصلة).
+- تذكيرات يومية بوقت مخصص لكل من الصباح والمساء.
+- مظهر فاتح/غامق/تلقائي.
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## التشغيل محليًا
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+هتلاقي خيارات لفتح التطبيق في: development build، محاكي أندرويد، محاكي iOS، أو Expo Go.
 
-## Learn more
+## الجودة والاختبارات
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm run lint        # ESLint
+npm run typecheck    # فحص TypeScript
+npm run format:check # فحص Prettier
+npm test             # Jest
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+كل ده بيتشغل تلقائيًا على GitHub Actions مع كل push/PR (شوف `.github/workflows/ci.yml`).
 
-## Join the community
+## البناء والنشر (EAS)
 
-Join our community of developers creating universal apps.
+المشروع فيه `eas.json` بثلاث بروفايلز: `development`، `preview`، `production`.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+npx eas login
+npx eas build --profile preview --platform android   # بناء تجريبي
+npx eas build --profile production --platform all    # بناء نهائي للمتاجر
+npx eas submit --profile production --platform ios   # رفع لـ App Store
+```
+
+**قبل أول build production لازم:**
+
+1. تراجع `app.json` → `ios.bundleIdentifier` و `android.package` وتتأكد إنهم زي ما عايز فعليًا (حاليًا `com.anonymous.sakeenah`، الأفضل تغيّرهم لدومين حقيقي بتاعك).
+2. تعبّي بيانات `eas.json` → `submit.production` (Apple ID، App Store Connect App ID، Team ID، ومسار مفتاح خدمة جوجل لأندرويد).
+3. تحدّث الروابط الوهمية في `app/about.tsx` (سياسة الخصوصية وإيميل التواصل) بروابط حقيقية.
+4. تجهّز صور المتجر (screenshots) ووصف التطبيق على App Store Connect و Google Play Console — دي حاجات لازم تتعمل من حسابك مباشرة.
+
+## حاجات لسه محتاجة قرار/حساب خارجي
+
+القائمة دي مقصودة عشان توضح حدود اللي أي كود ممكن يعمله من غير تدخل بشري:
+
+- **Crash reporting/analytics**: محتاج حساب Sentry (أو مشابه) وDSN key بتاعك.
+- **OTA updates** (`expo-updates`): محتاج EAS project ID بتاعك بعد أول `eas init`.
+- **محتوى بعيد (Remote content) للأذكار**: لو حبيت تضيف/تعدّل أذكار من غير App Store review، محتاج backend بسيط (Firebase Remote Config أو JSON مستضاف) — مش موجود حاليًا، الأذكار لسه ثابتة في `data/azkar.ts`.
+- **Widgets للشاشة الرئيسية**: بتحتاج كود native ومشروع development build كامل، مش قابلة للتنفيذ في Expo Go.
+- **مزامنة سحابية للستريك بين الأجهزة**: محتاج قرار على مزود (Firebase/Supabase) وربط حساب مستخدم.
+
+## البنية
+
+```
+app/                    شاشات التطبيق (expo-router)
+  (tabs)/                الرئيسية، مواعيد الصلاة، الإعدادات
+  azkar/[category].tsx   تفاصيل فئة أذكار
+  azkar/favorites.tsx    المفضلة
+  qibla.tsx              اتجاه القبلة
+  search.tsx             البحث
+  about.tsx              عن التطبيق
+data/                    بيانات الأذكار، الستريك، المفضلة
+lib/                     مواعيد الصلاة، القبلة، الإشعارات
+contexts/                ثيم التطبيق (فاتح/غامق)
+__tests__/               اختبارات Jest للمنطق الأساسي
+```

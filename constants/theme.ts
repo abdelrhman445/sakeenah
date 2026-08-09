@@ -1,41 +1,92 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * لوحة ألوان "سكينة" الموحّدة — نسخة غامقة (الافتراضية) ونسخة فاتحة.
+ * أي شاشة في التطبيق المفروض تسحب ألوانها من هنا (عن طريق useAppTheme)
+ * بدل ما تكتب أكواد هيكس بشكل مباشر جوه StyleSheet.create.
  */
 
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+export type AppColorScheme = {
+  background: string;
+  card: string;
+  cardBorder: string;
+  cardDone: string;
+  cardDoneBorder: string;
+  text: string;
+  textSecondary: string;
+  primary: string;
+  onPrimary: string;
+  warning: string;
+  danger: string;
+  overlay: string;
+  tabBar: string;
+  tabIconDefault: string;
+  tabIconSelected: string;
+};
 
+export const AppColors: Record<'light' | 'dark', AppColorScheme> = {
+  dark: {
+    background: '#0F1720',
+    card: '#161F28',
+    cardBorder: '#22303B',
+    cardDone: '#132821',
+    cardDoneBorder: '#7FE3C0',
+    text: '#E6EDF3',
+    textSecondary: '#8B98A5',
+    primary: '#7FE3C0',
+    onPrimary: '#0F1720',
+    warning: '#FFB020',
+    danger: '#E5484D',
+    overlay: 'rgba(0,0,0,0.6)',
+    tabBar: '#0F1720',
+    tabIconDefault: '#8B98A5',
+    tabIconSelected: '#7FE3C0',
+  },
+  light: {
+    background: '#F6F3EC',
+    card: '#FFFFFF',
+    cardBorder: '#E4DECF',
+    cardDone: '#E9F7F0',
+    cardDoneBorder: '#1E9E76',
+    text: '#1C2530',
+    textSecondary: '#6B7684',
+    primary: '#1E9E76',
+    onPrimary: '#FFFFFF',
+    warning: '#B5760A',
+    danger: '#C4302B',
+    overlay: 'rgba(0,0,0,0.45)',
+    tabBar: '#FFFFFF',
+    tabIconDefault: '#8B98A5',
+    tabIconSelected: '#1E9E76',
+  },
+};
+
+// إبقاء الاسم القديم Colors شغال لأي كومبوننت لسه بيستخدم التمبلت الافتراضي
+// (ThemedText / ThemedView المتبقّية من قالب Expo).
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    text: AppColors.light.text,
+    background: AppColors.light.background,
+    tint: AppColors.light.primary,
+    icon: AppColors.light.textSecondary,
+    tabIconDefault: AppColors.light.tabIconDefault,
+    tabIconSelected: AppColors.light.tabIconSelected,
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    text: AppColors.dark.text,
+    background: AppColors.dark.background,
+    tint: AppColors.dark.primary,
+    icon: AppColors.dark.textSecondary,
+    tabIconDefault: AppColors.dark.tabIconDefault,
+    tabIconSelected: AppColors.dark.tabIconSelected,
   },
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {

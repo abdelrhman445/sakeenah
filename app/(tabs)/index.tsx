@@ -4,27 +4,62 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { categories } from '@/data/azkar';
-import { getCurrentStreak } from '@/data/streak';
+import { getBothStreaks } from '@/data/streak';
+import { useAppTheme } from '@/contexts/theme-context';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const [streak, setStreak] = useState(0);
+  const { colors } = useAppTheme();
+  const [streaks, setStreaks] = useState({ morning: 0, evening: 0 });
 
   useFocusEffect(
     useCallback(() => {
-      getCurrentStreak().then(setStreak);
+      getBothStreaks().then(setStreaks);
     }, [])
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>سكينة</Text>
-        <Text style={styles.subtitle}>أذكارك اليومية بقلب حاضر</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => router.push('/azkar/favorites')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol name="star.fill" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => router.push('/search')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol name="magnifyingglass" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
 
-        {streak > 0 && (
-          <View style={styles.streakBadge}>
-            <Text style={styles.streakText}>🔥 {streak} يوم متواصل</Text>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: colors.primary }]}>سكينة</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          أذكارك اليومية بقلب حاضر
+        </Text>
+
+        {(streaks.morning > 0 || streaks.evening > 0) && (
+          <View style={styles.streakRow}>
+            {streaks.morning > 0 && (
+              <View style={[styles.streakBadge, { backgroundColor: colors.card }]}>
+                <Text style={[styles.streakText, { color: colors.warning }]}>
+                  🌅 {streaks.morning} يوم
+                </Text>
+              </View>
+            )}
+            {streaks.evening > 0 && (
+              <View style={[styles.streakBadge, { backgroundColor: colors.card }]}>
+                <Text style={[styles.streakText, { color: colors.warning }]}>
+                  🌙 {streaks.evening} يوم
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -37,13 +72,15 @@ export default function HomeScreen() {
         columnWrapperStyle={styles.row}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.card}
+            style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
             activeOpacity={0.8}
             onPress={() => router.push(`/azkar/${item.id}`)}
           >
             <Text style={styles.cardIcon}>{item.icon}</Text>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardCount}>{item.items.length} أذكار</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{item.title}</Text>
+            <Text style={[styles.cardCount, { color: colors.textSecondary }]}>
+              {item.items.length} أذكار
+            </Text>
           </TouchableOpacity>
         )}
       />
@@ -54,33 +91,42 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F1720',
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    gap: 16,
+  },
+  iconButton: {
+    padding: 4,
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 4,
     paddingBottom: 10,
     alignItems: 'center',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#7FE3C0',
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 14,
-    color: '#8B98A5',
     marginBottom: 12,
   },
+  streakRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   streakBadge: {
-    backgroundColor: '#1E2A33',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
   },
   streakText: {
-    color: '#FFB020',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -91,28 +137,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   card: {
-    backgroundColor: '#161F28',
     borderRadius: 16,
     padding: 20,
     width: '48%',
     marginBottom: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#22303B',
   },
   cardIcon: {
     fontSize: 36,
     marginBottom: 8,
   },
   cardTitle: {
-    color: '#E6EDF3',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 4,
     textAlign: 'center',
   },
   cardCount: {
-    color: '#8B98A5',
     fontSize: 12,
   },
 });
