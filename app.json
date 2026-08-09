@@ -13,12 +13,7 @@
       "bundleIdentifier": "com.anonymous.sakeenah",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "بنستخدم موقعك عشان نحسب مواعيد الصلاة واتجاه القبلة بدقة لمكانك",
-        "UIBackgroundModes": [
-          "location",
-          "fetch",
-          "location",
-          "fetch"
-        ]
+        "UIBackgroundModes": ["location", "fetch", "location", "fetch"]
       }
     },
     "android": {

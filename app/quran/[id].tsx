@@ -24,7 +24,10 @@ export default function SurahScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={['bottom']}
+    >
       <Stack.Screen options={{ title: chapter.name, headerBackTitle: 'رجوع' }} />
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -39,7 +42,9 @@ export default function SurahScreen() {
           <Text style={[styles.basmala, { color: colors.primary }]}>{BASMALA}</Text>
         )}
 
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+        <View
+          style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+        >
           <Text style={[styles.verses, { color: colors.text }]}>
             {chapter.verses.map((v) => (
               <Text key={v.id}>
