@@ -18,7 +18,7 @@ export default function AboutScreen() {
 
       <TouchableOpacity
         style={[styles.button, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-        onPress={() => WebBrowser.openBrowserAsync('http://portfolio.nullspecteracademy.ninja/')}
+        onPress={() => WebBrowser.openBrowserAsync('https://fragrant-wildflower-3e36.boodapro540.workers.dev/privacy')}
       >
         <Text style={[styles.buttonText, { color: colors.text }]}>سياسة الخصوصية</Text>
       </TouchableOpacity>
