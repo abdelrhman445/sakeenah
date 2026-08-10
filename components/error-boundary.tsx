@@ -2,6 +2,7 @@ import { Component, ReactNode } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { AppColors } from '@/constants/theme';
+import { reportError } from '@/lib/errorReporting';
 
 type Props = { children: ReactNode };
 type State = { hasError: boolean };
@@ -18,9 +19,12 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true };
   }
 
-  componentDidCatch(error: unknown, info: unknown) {
-    // نقطة الدمج المستقبلية مع أداة تتبع الأعطال (Sentry أو غيرها).
-    console.error('Sakeenah crashed:', error, info);
+  componentDidCatch(error: unknown, info: { componentStack?: string } | unknown) {
+    const stack =
+      typeof info === 'object' && info !== null && 'componentStack' in info
+        ? String((info as { componentStack?: string }).componentStack ?? '')
+        : undefined;
+    reportError(error, stack ? `render-crash: ${stack.slice(0, 200)}` : 'render-crash');
   }
 
   handleRetry = () => {

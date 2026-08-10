@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View, TouchableOpacity, Text, FlatList } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { categories } from '@/data/azkar';
 import { getBothStreaks } from '@/data/streak';
 import { formatHijriDate } from '@/lib/hijri';
+import { hasCompletedOnboarding } from '@/lib/onboarding';
 import { useAppTheme } from '@/contexts/theme-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
@@ -19,6 +20,18 @@ export default function HomeScreen() {
       getBothStreaks().then(setStreaks);
     }, [])
   );
+
+  // بيتنفذ مرة واحدة بس عند أول تحميل للتطبيق — لو المستخدم لسه ما شافش
+  // شاشة التعريف، بنعرضها فوق التابز قبل أي حاجة تانية.
+  useEffect(() => {
+    let active = true;
+    hasCompletedOnboarding().then((seen) => {
+      if (active && !seen) router.push('/onboarding');
+    });
+    return () => {
+      active = false;
+    };
+  }, [router]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>

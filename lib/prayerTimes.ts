@@ -3,6 +3,8 @@ import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
+import { reportError } from '@/lib/errorReporting';
+
 export type PrayerName = 'fajr' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 
 // نفس فكرة القناة في lib/notifications.ts: قنوات أندرويد ثابتة مش
@@ -17,7 +19,26 @@ const STORAGE_KEYS = {
   LOCATION: 'prayerTimes:location',
   NOTIFICATIONS_ENABLED: 'prayerTimes:notificationsEnabled',
   LAST_SCHEDULED_DATE: 'prayerTimes:lastScheduledDate',
+  CACHED_TIMINGS: 'prayerTimes:cachedTimings',
+  CACHED_TIMINGS_DATE: 'prayerTimes:cachedTimingsDate',
 };
+
+const FETCH_TIMEOUT_MS = 8000;
+const MAX_RETRIES = 2;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const PRAYER_LABELS: Record<PrayerName, string> = {
   fajr: 'الفجر',
@@ -59,7 +80,7 @@ export async function requestLocationPermission(): Promise<Coords | null> {
     await AsyncStorage.setItem(STORAGE_KEYS.LOCATION, JSON.stringify(coords));
     return coords;
   } catch (err) {
-    console.error('requestLocationPermission failed', err);
+    reportError(err, 'prayerTimes:requestLocationPermission');
     return null;
   }
 }
@@ -69,7 +90,7 @@ export async function getSavedLocation(): Promise<Coords | null> {
     const raw = await AsyncStorage.getItem(STORAGE_KEYS.LOCATION);
     return raw ? (JSON.parse(raw) as Coords) : null;
   } catch (err) {
-    console.error('getSavedLocation failed', err);
+    reportError(err, 'prayerTimes:getSavedLocation');
     return null;
   }
 }
@@ -84,38 +105,81 @@ function todayDMY(): string {
   return `${dd}-${mm}-${yyyy}`;
 }
 
-async function fetchTimingsRaw(coords: Coords, dateDMY: string) {
+// بتحاول تجيب مواعيد الصلاة من Aladhan API، وبتعيد المحاولة مرتين كمان
+// (بفاصل زمني متزايد) لو النت متقطع أو الـ API رجّع خطأ مؤقت، قبل ما
+// نستسلم ونرجّع للكاش المحلي.
+async function fetchTimingsRaw(coords: Coords, dateDMY: string): Promise<Record<string, string>> {
   const url = `https://api.aladhan.com/v1/timings/${dateDMY}?latitude=${coords.latitude}&longitude=${coords.longitude}&method=${CALCULATION_METHOD}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Aladhan API error: ${res.status}`);
-  const json = await res.json();
-  return json.data.timings as Record<string, string>;
+
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const res = await fetchWithTimeout(url, FETCH_TIMEOUT_MS);
+      if (!res.ok) throw new Error(`Aladhan API error: ${res.status}`);
+      const json = await res.json();
+      return json.data.timings as Record<string, string>;
+    } catch (err) {
+      lastError = err;
+      if (attempt < MAX_RETRIES) await delay(500 * (attempt + 1));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('fetchTimingsRaw failed');
 }
 
-export async function getTodayTimings(): Promise<Timing[] | null> {
+function mapRawTimings(raw: Record<string, string>): Timing[] {
+  const order: PrayerName[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+  const keyMap: Record<PrayerName, string> = {
+    fajr: 'Fajr',
+    dhuhr: 'Dhuhr',
+    asr: 'Asr',
+    maghrib: 'Maghrib',
+    isha: 'Isha',
+  };
+
+  return order.map((name) => ({
+    name,
+    label: PRAYER_LABELS[name],
+    // Aladhan returns "HH:mm (TZ)" sometimes — strip anything after a space.
+    time: (raw[keyMap[name]] || '').split(' ')[0],
+  }));
+}
+
+export type PrayerTimingsResult = {
+  timings: Timing[];
+  /** true لو دي مواعيد من كاش قديم (يوم مختلف) بسبب فشل الاتصال بالإنترنت. */
+  stale: boolean;
+};
+
+export async function getTodayTimings(): Promise<PrayerTimingsResult | null> {
+  const today = todayDMY();
+
   try {
     const coords = await getSavedLocation();
     if (!coords) return null;
 
-    const raw = await fetchTimingsRaw(coords, todayDMY());
+    try {
+      const raw = await fetchTimingsRaw(coords, today);
+      const timings = mapRawTimings(raw);
 
-    const order: PrayerName[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-    const keyMap: Record<PrayerName, string> = {
-      fajr: 'Fajr',
-      dhuhr: 'Dhuhr',
-      asr: 'Asr',
-      maghrib: 'Maghrib',
-      isha: 'Isha',
-    };
+      await AsyncStorage.setItem(STORAGE_KEYS.CACHED_TIMINGS, JSON.stringify(timings));
+      await AsyncStorage.setItem(STORAGE_KEYS.CACHED_TIMINGS_DATE, today);
 
-    return order.map((name) => ({
-      name,
-      label: PRAYER_LABELS[name],
-      // Aladhan returns "HH:mm (TZ)" sometimes — strip anything after a space.
-      time: (raw[keyMap[name]] || '').split(' ')[0],
-    }));
+      return { timings, stale: false };
+    } catch (fetchErr) {
+      reportError(fetchErr, 'prayerTimes:fetch');
+
+      // فشل الاتصال بالـ API — نرجّع آخر مواعيد محفوظة بدل ما نسيب
+      // المستخدم من غير مواعيد خالص. لو الكاش من يوم غير النهاردة،
+      // بنعلّمها stale عشان الواجهة توضح إنها مش محدّثة.
+      const cachedRaw = await AsyncStorage.getItem(STORAGE_KEYS.CACHED_TIMINGS);
+      if (!cachedRaw) return null;
+
+      const cachedTimings = JSON.parse(cachedRaw) as Timing[];
+      const cachedDate = await AsyncStorage.getItem(STORAGE_KEYS.CACHED_TIMINGS_DATE);
+      return { timings: cachedTimings, stale: cachedDate !== today };
+    }
   } catch (err) {
-    console.error('getTodayTimings failed', err);
+    reportError(err, 'prayerTimes:getTodayTimings');
     return null;
   }
 }
@@ -127,7 +191,7 @@ export async function isPrayerNotificationsEnabled(): Promise<boolean> {
     const raw = await AsyncStorage.getItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED);
     return raw === 'true';
   } catch (err) {
-    console.error('isPrayerNotificationsEnabled failed', err);
+    reportError(err, 'prayerTimes:isPrayerNotificationsEnabled');
     return false;
   }
 }
@@ -137,7 +201,7 @@ export async function shouldRefreshSchedule(): Promise<boolean> {
     const lastDate = await AsyncStorage.getItem(STORAGE_KEYS.LAST_SCHEDULED_DATE);
     return lastDate !== todayDMY();
   } catch (err) {
-    console.error('shouldRefreshSchedule failed', err);
+    reportError(err, 'prayerTimes:shouldRefreshSchedule');
     return true;
   }
 }
@@ -164,8 +228,11 @@ export async function schedulePrayerNotifications(): Promise<boolean> {
     }
     if (finalStatus !== 'granted') return false;
 
-    const timings = await getTodayTimings();
-    if (!timings) return false;
+    const result = await getTodayTimings();
+    // لو مفيش مواعيد أصلًا، أو اللي عندنا كاش قديم من يوم مختلف، نتجنب
+    // جدولة تذكيرات بمواعيد غلط — أفضل نأجل الجدولة لحد ما النت يرجع.
+    if (!result || result.stale) return false;
+    const { timings } = result;
 
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync(PRAYER_ANDROID_CHANNEL_ID, {
@@ -207,7 +274,7 @@ export async function schedulePrayerNotifications(): Promise<boolean> {
 
     return scheduledAny || timings.length === 0;
   } catch (err) {
-    console.error('schedulePrayerNotifications failed', err);
+    reportError(err, 'prayerTimes:schedulePrayerNotifications');
     return false;
   }
 }
@@ -268,6 +335,6 @@ export async function disablePrayerNotifications(): Promise<void> {
     await AsyncStorage.setItem(STORAGE_KEYS.NOTIFICATIONS_ENABLED, 'false');
     await AsyncStorage.removeItem(STORAGE_KEYS.LAST_SCHEDULED_DATE);
   } catch (err) {
-    console.error('disablePrayerNotifications failed', err);
+    reportError(err, 'prayerTimes:disablePrayerNotifications');
   }
 }

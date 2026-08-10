@@ -36,6 +36,7 @@ export default function PrayerTimesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [hasLocation, setHasLocation] = useState(false);
   const [timings, setTimings] = useState<Timing[] | null>(null);
+  const [stale, setStale] = useState(false);
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [now, setNow] = useState(new Date());
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -58,7 +59,8 @@ export default function PrayerTimesScreen() {
 
     setHasLocation(true);
     const result = await getTodayTimings();
-    setTimings(result);
+    setTimings(result?.timings ?? null);
+    setStale(result?.stale ?? false);
     const enabled = await isPrayerNotificationsEnabled();
     setNotificationsOn(enabled);
     setLoading(false);
@@ -164,6 +166,19 @@ export default function PrayerTimesScreen() {
             />
           }
         >
+          {stale && (
+            <View
+              style={[
+                styles.staleBanner,
+                { backgroundColor: colors.card, borderColor: colors.warning },
+              ]}
+            >
+              <Text style={[styles.staleText, { color: colors.warning }]}>
+                ⚠️ مفيش اتصال بالإنترنت — المواعيد دي من آخر تحديث محفوظ ومش لليوم بالظبط
+              </Text>
+            </View>
+          )}
+
           {nextPrayer && (
             <View
               style={[
@@ -285,6 +300,17 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 16,
+  },
+  staleBanner: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 14,
+  },
+  staleText: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
   },
   nextCard: {
     borderRadius: 18,

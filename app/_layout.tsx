@@ -1,10 +1,12 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { ErrorBoundary } from '@/components/error-boundary';
 import { AppThemeProvider, useAppTheme } from '@/contexts/theme-context';
+import { installGlobalErrorHandlers } from '@/lib/errorReporting';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -17,6 +19,10 @@ function RootNavigator() {
     <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="onboarding"
+          options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }}
+        />
         <Stack.Screen name="about" options={{ presentation: 'modal', title: 'عن التطبيق' }} />
         <Stack.Screen
           name="search"
@@ -34,6 +40,10 @@ function RootNavigator() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    installGlobalErrorHandlers();
+  }, []);
+
   return (
     <ErrorBoundary>
       <AppThemeProvider>
