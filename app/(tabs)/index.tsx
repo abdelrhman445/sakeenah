@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { categories } from '@/data/azkar';
 import { getBothStreaks } from '@/data/streak';
+import { formatHijriDate } from '@/lib/hijri';
 import { useAppTheme } from '@/contexts/theme-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
@@ -42,6 +43,9 @@ export default function HomeScreen() {
         <Text style={[styles.title, { color: colors.primary }]}>سكينة</Text>
         <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           أذكارك اليومية بقلب حاضر
+        </Text>
+        <Text style={[styles.hijri, { color: colors.textSecondary }]}>
+          {formatHijriDate()} (تقريبي)
         </Text>
 
         {(streaks.morning > 0 || streaks.evening > 0) && (
@@ -115,6 +119,11 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
+    marginBottom: 12,
+  },
+  hijri: {
+    fontSize: 11,
+    marginTop: -8,
     marginBottom: 12,
   },
   streakRow: {

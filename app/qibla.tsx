@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, Easing, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getQiblaDirection } from '@/lib/qibla';
 import { useAppTheme } from '@/contexts/theme-context';
+
+const KAABA_LAT = 21.4225;
+const KAABA_LNG = 39.8262;
 
 // حساب اتجاه القبلة نفسه (getQiblaDirection) صح ١٠٠٪ ومتأكد منه
 // بالاختبارات. لكن بوصلة بعض الأجهزة (خصوصًا أندرويد) بترجّع قراءة
@@ -20,6 +23,7 @@ export default function QiblaScreen() {
   const [qiblaBearing, setQiblaBearing] = useState<number | null>(null);
   const [heading, setHeading] = useState(0);
   const [inverted, setInverted] = useState(false);
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const rotation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -34,6 +38,12 @@ export default function QiblaScreen() {
       AsyncStorage.setItem(INVERT_STORAGE_KEY, String(next));
       return next;
     });
+  };
+
+  const openInMaps = () => {
+    if (!coords) return;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${coords.latitude},${coords.longitude}&destination=${KAABA_LAT},${KAABA_LNG}`;
+    Linking.openURL(url);
   };
 
   useEffect(() => {
@@ -56,6 +66,7 @@ export default function QiblaScreen() {
         accuracy: Location.Accuracy.Balanced,
       });
       if (cancelled) return;
+      setCoords({ latitude: position.coords.latitude, longitude: position.coords.longitude });
       const bearing = getQiblaDirection(position.coords.latitude, position.coords.longitude);
       setQiblaBearing(bearing);
 
@@ -135,6 +146,15 @@ export default function QiblaScreen() {
           >
             <Text style={[styles.helpText, { color: colors.primary, fontWeight: 'bold' }]}>
               {inverted ? '✓ تم قلب اتجاه المؤشر' : 'السهم بيشاور عكس الكعبة؟ اضغط هنا لقلبه'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.helpButton, { borderColor: colors.cardBorder, marginTop: 12 }]}
+            onPress={openInMaps}
+          >
+            <Text style={[styles.helpText, { color: colors.text, fontWeight: 'bold' }]}>
+              🗺️ افتح الاتجاه في خرائط جوجل
             </Text>
           </TouchableOpacity>
         </View>
