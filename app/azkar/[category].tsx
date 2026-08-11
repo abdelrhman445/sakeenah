@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -12,12 +12,15 @@ import {
 import { useLocalSearchParams, useFocusEffect, Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import * as Sharing from 'expo-sharing';
 
 import { categories, Zekr } from '@/data/azkar';
 import { markCategoryDoneToday } from '@/data/streak';
 import { getFavoriteIds, toggleFavorite } from '@/data/favorites';
+import { reportError } from '@/lib/errorReporting';
 import { useAppTheme } from '@/contexts/theme-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { ShareCard, ShareCardHandle } from '@/components/share-card';
 
 export default function AzkarListScreen() {
   const { category } = useLocalSearchParams<{ category: string }>();
@@ -27,6 +30,8 @@ export default function AzkarListScreen() {
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [virtueModal, setVirtueModal] = useState<Zekr | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [shareItem, setShareItem] = useState<Zekr | null>(null);
+  const shareCardRef = useRef<ShareCardHandle>(null);
 
   useEffect(() => {
     if (categoryData) {
@@ -43,6 +48,31 @@ export default function AzkarListScreen() {
       getFavoriteIds().then(setFavoriteIds);
     }, [])
   );
+
+  // بيتنفذ بعد ما `shareItem` يتحدد — بنستنى تِك واحد عشان الكارت المخفي
+  // ياخد فرصة يترسم قبل الالتقاط، وبعدين نفتح شيت المشاركة بالصورة الناتجة.
+  useEffect(() => {
+    if (!shareItem) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        const uri = await shareCardRef.current?.capture();
+        if (cancelled || !uri) return;
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, { mimeType: 'image/png' });
+        }
+      } catch (err) {
+        reportError(err, 'azkar:shareImage');
+        if (!cancelled) Alert.alert('حصل خطأ', 'مقدرناش نجهز صورة المشاركة');
+      } finally {
+        if (!cancelled) setShareItem(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [shareItem]);
 
   if (!categoryData) {
     return (
@@ -135,6 +165,16 @@ export default function AzkarListScreen() {
                   >
                     <IconSymbol name="info.circle.fill" size={17} color={colors.textSecondary} />
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      setShareItem(item);
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel="مشاركة كصورة"
+                  >
+                    <IconSymbol name="square.and.arrow.up" size={17} color={colors.textSecondary} />
+                  </TouchableOpacity>
                 </View>
               </View>
             </TouchableOpacity>
@@ -170,6 +210,10 @@ export default function AzkarListScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {shareItem && (
+        <ShareCard ref={shareCardRef} eyebrow={categoryData.title} body={shareItem.text} />
+      )}
     </SafeAreaView>
   );
 }

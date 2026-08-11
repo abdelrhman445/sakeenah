@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { logCompletion } from './history';
+
 /**
  * الستريك بقى مقسوم بين الصباح والمساء بدل عداد واحد مشترك — كده كل
  * فئة (صباح/مساء) بتحسب استمراريتها لوحدها، وده أصح لتطبيق اسمه "سكينة"
@@ -73,6 +75,7 @@ export async function markCategoryDoneToday(categoryId: string): Promise<number>
 
   await AsyncStorage.setItem(STREAK_KEY(type), streak.toString());
   await AsyncStorage.setItem(LAST_DATE_KEY(type), today);
+  await logCompletion(type);
   return streak;
 }
 

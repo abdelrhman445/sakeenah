@@ -27,6 +27,11 @@ const MAPPING = {
   'book.fill': 'menu-book',
   'text.book.closed.fill': 'auto-stories',
   xmark: 'close',
+  'square.and.arrow.up': 'share',
+  'play.fill': 'play-arrow',
+  'pause.fill': 'pause',
+  'chart.bar.fill': 'bar-chart',
+  'circle.grid.cross.fill': 'blur-circular',
 } as IconMapping;
 
 /**

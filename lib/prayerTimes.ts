@@ -146,9 +146,13 @@ function mapRawTimings(raw: Record<string, string>): Timing[] {
 
 export type PrayerTimingsResult = {
   timings: Timing[];
+  /** ميعاد الإمساك (قبل الفجر بشوية) — مفيد بس في رمضان. null لو مش متاح. */
+  imsak: string | null;
   /** true لو دي مواعيد من كاش قديم (يوم مختلف) بسبب فشل الاتصال بالإنترنت. */
   stale: boolean;
 };
+
+type CachedPayload = { timings: Timing[]; imsak: string | null };
 
 export async function getTodayTimings(): Promise<PrayerTimingsResult | null> {
   const today = todayDMY();
@@ -160,11 +164,13 @@ export async function getTodayTimings(): Promise<PrayerTimingsResult | null> {
     try {
       const raw = await fetchTimingsRaw(coords, today);
       const timings = mapRawTimings(raw);
+      const imsak = (raw.Imsak || '').split(' ')[0] || null;
 
-      await AsyncStorage.setItem(STORAGE_KEYS.CACHED_TIMINGS, JSON.stringify(timings));
+      const payload: CachedPayload = { timings, imsak };
+      await AsyncStorage.setItem(STORAGE_KEYS.CACHED_TIMINGS, JSON.stringify(payload));
       await AsyncStorage.setItem(STORAGE_KEYS.CACHED_TIMINGS_DATE, today);
 
-      return { timings, stale: false };
+      return { timings, imsak, stale: false };
     } catch (fetchErr) {
       reportError(fetchErr, 'prayerTimes:fetch');
 
@@ -174,14 +180,28 @@ export async function getTodayTimings(): Promise<PrayerTimingsResult | null> {
       const cachedRaw = await AsyncStorage.getItem(STORAGE_KEYS.CACHED_TIMINGS);
       if (!cachedRaw) return null;
 
-      const cachedTimings = JSON.parse(cachedRaw) as Timing[];
+      const parsed = JSON.parse(cachedRaw);
+      // توافق مع الكاش القديم قبل إضافة الإمساك، اللي كان بيخزّن المصفوفة مباشرة.
+      const cachedTimings: Timing[] = Array.isArray(parsed) ? parsed : parsed.timings;
+      const cachedImsak: string | null = Array.isArray(parsed) ? null : (parsed.imsak ?? null);
+      if (!cachedTimings) return null;
+
       const cachedDate = await AsyncStorage.getItem(STORAGE_KEYS.CACHED_TIMINGS_DATE);
-      return { timings: cachedTimings, stale: cachedDate !== today };
+      return { timings: cachedTimings, imsak: cachedImsak, stale: cachedDate !== today };
     }
   } catch (err) {
     reportError(err, 'prayerTimes:getTodayTimings');
     return null;
   }
+}
+
+/** بيحسب دقايق العد التنازلي لميعاد معين (HH:mm) من دلوقتي. null لو الميعاد فات النهاردة. */
+export function getMinutesUntil(time: string, now: Date = new Date()): number | null {
+  const match = time.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const targetMinutes = Number(match[1]) * 60 + Number(match[2]);
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  return targetMinutes > nowMinutes ? targetMinutes - nowMinutes : null;
 }
 
 // ---------- Notifications ----------

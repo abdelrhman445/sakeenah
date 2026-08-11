@@ -13,11 +13,17 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
+import * as Sharing from 'expo-sharing';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 
 import { getChapter, QuranVerse } from '@/data/quran';
 import { setLastRead } from '@/data/quranProgress';
 import { getFavoriteVerseIds, toggleFavoriteVerse } from '@/data/quranFavorites';
+import { getSurahAudioUrl } from '@/lib/quranAudio';
+import { reportError } from '@/lib/errorReporting';
 import { useAppTheme } from '@/contexts/theme-context';
+import { IconSymbol } from '@/components/ui/icon-symbol';
+import { ShareCard, ShareCardHandle } from '@/components/share-card';
 
 // كل السور بتتصدّر بالبسملة ما عدا الفاتحة (البسملة عندها أصلاً أول آية)
 // وسورة التوبة (معروف إنها بتتلى من غير بسملة).
@@ -37,9 +43,14 @@ export default function SurahScreen() {
 
   const [fontSize, setFontSize] = useState(DEFAULT_FONT);
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
+  const [shareVerse, setShareVerse] = useState<QuranVerse | null>(null);
+  const shareCardRef = useRef<ShareCardHandle>(null);
   const listRef = useRef<FlatList<QuranVerse>>(null);
   const topVerseRef = useRef<number>(targetVerse ?? 1);
   const hasScrolledToTarget = useRef(false);
+
+  const audioPlayer = useAudioPlayer({ uri: getSurahAudioUrl(chapter?.id ?? 1) });
+  const audioStatus = useAudioPlayerStatus(audioPlayer);
 
   useEffect(() => {
     AsyncStorage.getItem(FONT_SIZE_KEY).then((raw) => {
@@ -92,9 +103,43 @@ export default function SurahScreen() {
         text: isFav ? 'إزالة من المفضلة' : 'إضافة للمفضلة',
         onPress: () => handleToggleFavorite(v),
       },
-      { text: 'مشاركة', onPress: () => handleShare(v) },
+      { text: 'مشاركة نص', onPress: () => handleShare(v) },
+      { text: 'مشاركة كصورة', onPress: () => setShareVerse(v) },
       { text: 'إلغاء', style: 'cancel' },
     ]);
+  };
+
+  // بعد ما `shareVerse` يتحدد بنستنى تِك واحد عشان الكارت المخفي يترسم،
+  // ونلتقطه ونفتح شيت المشاركة بالصورة الناتجة.
+  useEffect(() => {
+    if (!shareVerse) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        const uri = await shareCardRef.current?.capture();
+        if (cancelled || !uri) return;
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, { mimeType: 'image/png' });
+        }
+      } catch (err) {
+        reportError(err, 'quran:shareImage');
+        if (!cancelled) Alert.alert('حصل خطأ', 'مقدرناش نجهز صورة المشاركة');
+      } finally {
+        if (!cancelled) setShareVerse(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [shareVerse]);
+
+  const toggleAudio = () => {
+    if (audioStatus.playing) {
+      audioPlayer.pause();
+    } else {
+      audioPlayer.play();
+    }
   };
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -145,13 +190,22 @@ export default function SurahScreen() {
           title: chapter.name,
           headerBackTitle: 'رجوع',
           headerRight: () => (
-            <View style={styles.fontControls}>
-              <TouchableOpacity onPress={() => changeFontSize(-2)} style={styles.fontBtn}>
-                <Text style={[styles.fontBtnText, { color: colors.primary }]}>أ-</Text>
+            <View style={styles.headerControls}>
+              <TouchableOpacity onPress={toggleAudio} style={styles.audioBtn}>
+                <IconSymbol
+                  name={audioStatus.playing ? 'pause.fill' : 'play.fill'}
+                  size={20}
+                  color={colors.primary}
+                />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => changeFontSize(2)} style={styles.fontBtn}>
-                <Text style={[styles.fontBtnText, { color: colors.primary }]}>أ+</Text>
-              </TouchableOpacity>
+              <View style={styles.fontControls}>
+                <TouchableOpacity onPress={() => changeFontSize(-2)} style={styles.fontBtn}>
+                  <Text style={[styles.fontBtnText, { color: colors.primary }]}>أ-</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => changeFontSize(2)} style={styles.fontBtn}>
+                  <Text style={[styles.fontBtnText, { color: colors.primary }]}>أ+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ),
         }}
@@ -183,6 +237,11 @@ export default function SurahScreen() {
             {!NO_BASMALA_HEADER.has(chapter.id) && (
               <Text style={[styles.basmala, { color: colors.primary }]}>{BASMALA}</Text>
             )}
+            {(audioStatus.playing || audioStatus.isBuffering) && (
+              <Text style={[styles.audioStatus, { color: colors.textSecondary }]}>
+                {audioStatus.isBuffering ? '🔊 بيتحمّل التلاوة...' : '🔊 الشيخ مشاري العفاسي'}
+              </Text>
+            )}
           </View>
         }
         renderItem={({ item }) => {
@@ -207,6 +266,14 @@ export default function SurahScreen() {
           );
         }}
       />
+
+      {shareVerse && chapter && (
+        <ShareCard
+          ref={shareCardRef}
+          eyebrow={`سورة ${chapter.name} — آية ${shareVerse.id}`}
+          body={shareVerse.text}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -220,6 +287,15 @@ const styles = StyleSheet.create({
     marginTop: 40,
     fontSize: 16,
   },
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  audioBtn: {
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
   fontControls: {
     flexDirection: 'row',
     gap: 4,
@@ -231,6 +307,10 @@ const styles = StyleSheet.create({
   fontBtnText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  audioStatus: {
+    fontSize: 12,
+    marginTop: 12,
   },
   content: {
     padding: 20,

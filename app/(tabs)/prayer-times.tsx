@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   PrayerName,
   disablePrayerNotifications,
+  getMinutesUntil,
   getNextPrayer,
   getSavedLocation,
   getTodayTimings,
@@ -23,10 +24,13 @@ import {
   requestLocationPermission,
   schedulePrayerNotifications,
 } from '@/lib/prayerTimes';
+import { gregorianToHijri } from '@/lib/hijri';
 import { useAppTheme } from '@/contexts/theme-context';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 
 type Timing = { name: PrayerName; label: string; time: string };
+
+const RAMADAN_HIJRI_MONTH = 9;
 
 export default function PrayerTimesScreen() {
   const router = useRouter();
@@ -36,6 +40,7 @@ export default function PrayerTimesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [hasLocation, setHasLocation] = useState(false);
   const [timings, setTimings] = useState<Timing[] | null>(null);
+  const [imsak, setImsak] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
   const [notificationsOn, setNotificationsOn] = useState(false);
   const [now, setNow] = useState(new Date());
@@ -60,6 +65,7 @@ export default function PrayerTimesScreen() {
     setHasLocation(true);
     const result = await getTodayTimings();
     setTimings(result?.timings ?? null);
+    setImsak(result?.imsak ?? null);
     setStale(result?.stale ?? false);
     const enabled = await isPrayerNotificationsEnabled();
     setNotificationsOn(enabled);
@@ -109,6 +115,10 @@ export default function PrayerTimesScreen() {
   };
 
   const nextPrayer = timings ? getNextPrayer(timings, now) : null;
+  const isRamadan = gregorianToHijri(now).month === RAMADAN_HIJRI_MONTH;
+  const maghribTiming = timings?.find((t) => t.name === 'maghrib') ?? null;
+  const imsakMinutesLeft = imsak ? getMinutesUntil(imsak, now) : null;
+  const iftarMinutesLeft = maghribTiming ? getMinutesUntil(maghribTiming.time, now) : null;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -176,6 +186,47 @@ export default function PrayerTimesScreen() {
               <Text style={[styles.staleText, { color: colors.warning }]}>
                 ⚠️ مفيش اتصال بالإنترنت — المواعيد دي من آخر تحديث محفوظ ومش لليوم بالظبط
               </Text>
+            </View>
+          )}
+
+          {isRamadan && (imsak || maghribTiming) && (
+            <View
+              style={[
+                styles.ramadanCard,
+                { backgroundColor: colors.card, borderColor: colors.primary },
+              ]}
+            >
+              <Text style={[styles.ramadanTitle, { color: colors.primary }]}>🌙 رمضان مبارك</Text>
+              <View style={styles.ramadanRow}>
+                {imsak && (
+                  <View style={styles.ramadanItem}>
+                    <Text style={[styles.ramadanLabel, { color: colors.textSecondary }]}>
+                      الإمساك
+                    </Text>
+                    <Text style={[styles.ramadanTime, { color: colors.text }]}>{imsak}</Text>
+                    {imsakMinutesLeft !== null && (
+                      <Text style={[styles.ramadanCountdown, { color: colors.warning }]}>
+                        {formatCountdown(imsakMinutesLeft)}
+                      </Text>
+                    )}
+                  </View>
+                )}
+                {maghribTiming && (
+                  <View style={styles.ramadanItem}>
+                    <Text style={[styles.ramadanLabel, { color: colors.textSecondary }]}>
+                      الإفطار
+                    </Text>
+                    <Text style={[styles.ramadanTime, { color: colors.text }]}>
+                      {maghribTiming.time}
+                    </Text>
+                    {iftarMinutesLeft !== null && (
+                      <Text style={[styles.ramadanCountdown, { color: colors.warning }]}>
+                        {formatCountdown(iftarMinutesLeft)}
+                      </Text>
+                    )}
+                  </View>
+                )}
+              </View>
             </View>
           )}
 
@@ -311,6 +362,38 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     textAlign: 'center',
+  },
+  ramadanCard: {
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 18,
+    marginBottom: 18,
+  },
+  ramadanTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  ramadanRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-around',
+  },
+  ramadanItem: {
+    alignItems: 'center',
+  },
+  ramadanLabel: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  ramadanTime: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  ramadanCountdown: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   nextCard: {
     borderRadius: 18,

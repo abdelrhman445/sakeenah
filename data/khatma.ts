@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { flatVerses, getChapter, totalVerseCount } from './quran';
+import { logCompletion } from './history';
 
 const DURATION_KEY = 'sakeenah_khatma_duration_days';
 const PROGRESS_KEY = 'sakeenah_khatma_progress_verses';
@@ -102,6 +103,7 @@ export async function markKhatmaDoneToday(): Promise<KhatmaPlan | null> {
   await AsyncStorage.setItem(PROGRESS_KEY, String(newProgress));
   await AsyncStorage.setItem(LAST_DONE_DATE_KEY, today);
   await AsyncStorage.setItem(STREAK_KEY, String(newStreak));
+  await logCompletion('khatma');
 
   return getKhatmaPlan();
 }

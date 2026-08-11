@@ -50,6 +50,20 @@ export default function HomeScreen() {
         >
           <IconSymbol name="magnifyingglass" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => router.push('/tasbeeh')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol name="circle.grid.cross.fill" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => router.push('/stats')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <IconSymbol name="chart.bar.fill" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.header}>

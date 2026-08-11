@@ -31,6 +31,8 @@ function RootNavigator() {
         <Stack.Screen name="azkar/favorites" options={{ title: 'المفضلة' }} />
         <Stack.Screen name="azkar/[category]" options={{ title: '' }} />
         <Stack.Screen name="qibla" options={{ title: 'اتجاه القبلة' }} />
+        <Stack.Screen name="tasbeeh" options={{ title: 'التسبيح' }} />
+        <Stack.Screen name="stats" options={{ title: 'الإحصائيات' }} />
         <Stack.Screen name="quran/[id]" options={{ title: '' }} />
         <Stack.Screen name="quran/favorites" options={{ title: 'آيات مفضلة' }} />
       </Stack>
