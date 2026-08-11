@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>سكينة — رفيقك اليومي للطمأنينة</title>
+    <meta
+      name="description"
+      content="سكينة: أذكار الصباح والمساء، مواعيد الصلاة، القبلة، القرآن الكريم بتلاوة صوتية، وتسبيح — في تطبيق واحد هادئ بلا إعلانات."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Tajawal:wght@300;400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #0f1720;
+        --panel: #16232b;
+        --panel-2: #123b2e;
+        --parchment: #f3ecda;
+        --parchment-dim: #e7dec6;
+        --gold: #c9a227;
+        --gold-bright: #e4c55b;
+        --mint: #7fe3c0;
+        --line: rgba(201, 162, 39, 0.28);
+        --shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+        --maxw: 1180px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        overflow-x: hidden; /* تأكيد منع التمرير الأفقي على مستوى الجذر */
+      }
+
+      body {
+        margin: 0;
+        background: var(--ink);
+        color: var(--parchment);
+        font-family: 'Tajawal', sans-serif;
+        line-height: 1.75;
+        overflow-x: hidden;
+        width: 100%;
+      }
+
+      ::selection {
+        background: var(--gold);
+        color: var(--ink);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--mint);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+
+      .kufi {
+        font-family: 'Reem Kufi', sans-serif;
+      }
+      .amiri {
+        font-family: 'Amiri', serif;
+      }
+
+      .wrap {
+        width: 100%; /* ضمان مرونة الحاوية داخل العناصر الثابتة */
+        max-width: var(--maxw);
+        margin: 0 auto;
+        padding: 0 clamp(16px, 5vw, 28px);
+      }
+
+      /* ---------- ornamental star motif ---------- */
+      .star {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        position: relative;
+      }
+      .star svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        margin: 0 auto;
+        color: var(--gold);
+        opacity: 0.85;
+        padding: clamp(40px, 8vw, 64px) 0 clamp(30px, 6vw, 48px);
+      }
+      .divider .line {
+        height: 1px;
+        width: clamp(40px, 20vw, 96px);
+        background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      }
+      .divider .star {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* ---------- header ---------- */
+      header {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 50;
+        background: rgba(15, 23, 32, 0.72);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--line);
+        width: 100%;
+        max-width: 100vw;
+      }
+      header .wrap {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 16px;
+        padding-bottom: 16px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Reem Kufi', sans-serif;
+        font-size: clamp(18px, 4vw, 22px);
+        color: var(--parchment);
+        text-decoration: none;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+      .brand .star {
+        width: clamp(18px, 4vw, 22px);
+        height: clamp(18px, 4vw, 22px);
+        color: var(--gold);
+      }
+
+      .nav-cta {
+        font-family: 'Tajawal', sans-serif;
+        font-weight: 700;
+        font-size: clamp(12px, 3vw, 14px);
+        color: var(--ink);
+        background: var(--mint);
+        padding: clamp(8px, 2vw, 10px) clamp(16px, 4vw, 22px);
+        border-radius: 999px;
+        text-decoration: none;
+        box-shadow: 0 6px 20px rgba(127, 227, 192, 0.25);
+        transition:
+          transform 0.2s ease,
+          box-shadow 0.2s ease;
+        white-space: nowrap; /* منع انكسار نص الزر */
+      }
+      .nav-cta:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 26px rgba(127, 227, 192, 0.35);
+      }
+
+      /* ---------- hero ---------- */
+      .hero {
+        position: relative;
+        min-height: 100svh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 140px 24px 90px;
+        isolation: isolate;
+        overflow: hidden; /* هذا السطر هو مفتاح حل المشكلة لمنع الخلفية الدوارة من توسيع الشاشة */
+      }
+      .hero-field {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background: radial-gradient(circle at 50% 18%, rgba(127, 227, 192, 0.1), transparent 45%),
+          radial-gradient(circle at 85% 80%, rgba(201, 162, 39, 0.1), transparent 40%), var(--ink);
+      }
+      .hero-pattern {
+        position: absolute;
+        inset: -10%;
+        z-index: -1;
+        opacity: 0.5;
+        animation: spin 220s linear infinite;
+        transform-origin: 50% 50%;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .hero-pattern {
+          animation: none;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .eyebrow {
+        font-family: 'Reem Kufi', sans-serif;
+        font-size: clamp(13px, 3vw, 15px);
+        letter-spacing: 3px;
+        color: var(--gold-bright);
+        margin-bottom: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+      .eyebrow .star {
+        width: 14px;
+        height: 14px;
+      }
+
+      .hero h1 {
+        font-family: 'Amiri', serif;
+        font-weight: 700;
+        font-size: clamp(42px, 12vw, 108px);
+        margin: 0 0 22px;
+        color: var(--parchment);
+        text-shadow: 0 2px 40px rgba(201, 162, 39, 0.15);
+      }
+
+      .verse {
+        font-family: 'Amiri', serif;
+        font-style: italic;
+        font-size: clamp(18px, 4vw, 28px);
+        color: var(--gold-bright);
+        max-width: 720px;
+        margin: 0 auto 10px;
+        line-height: 1.9;
+      }
+      .verse-ref {
+        font-family: 'Tajawal', sans-serif;
+        font-size: clamp(11px, 2.5vw, 13px);
+        color: var(--parchment-dim);
+        opacity: 0.7;
+        margin-bottom: 36px;
+      }
+
+      .tagline {
+        font-size: clamp(15px, 4vw, 18px);
+        color: var(--parchment-dim);
+        max-width: 520px;
+        margin: 0 auto 44px;
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 18px;
+        justify-content: center;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+
+      .arch-btn {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        width: 100%;
+        max-width: 200px;
+        padding: 16px 20px 18px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 110px 110px 14px 14px;
+        text-decoration: none;
+        color: var(--parchment);
+        transition:
+          transform 0.25s ease,
+          border-color 0.25s ease,
+          background 0.25s ease;
+      }
+      .arch-btn::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        right: 50%;
+        transform: translateX(50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--gold);
+        opacity: 0.7;
+      }
+      .arch-btn:hover {
+        transform: translateY(-3px);
+        border-color: var(--gold);
+        background: #1b2a33;
+      }
+      .arch-btn .small {
+        font-size: 11px;
+        color: var(--parchment-dim);
+        opacity: 0.8;
+      }
+      .arch-btn .big {
+        font-family: 'Reem Kufi', sans-serif;
+        font-size: 17px;
+        color: var(--gold-bright);
+      }
+      .arch-btn.primary {
+        background: linear-gradient(180deg, var(--mint), #63c9a6);
+        border-color: transparent;
+        color: var(--ink);
+      }
+      .arch-btn.primary .small {
+        color: rgba(15, 23, 32, 0.65);
+      }
+      .arch-btn.primary .big {
+        color: var(--ink);
+      }
+      .arch-btn.primary::before {
+        background: var(--ink);
+        opacity: 0.35;
+      }
+
+      /* ---------- section titles ---------- */
+      .section-title {
+        text-align: center;
+        max-width: 640px;
+        margin: 0 auto 8px;
+      }
+      .section-title .eyebrow {
+        margin-bottom: 16px;
+      }
+      .section-title h2 {
+        font-family: 'Amiri', serif;
+        font-size: clamp(26px, 6vw, 40px);
+        margin: 0 0 16px;
+        color: var(--parchment);
+      }
+      .section-title p {
+        color: var(--parchment-dim);
+        font-size: clamp(14px, 3.5vw, 16px);
+      }
+
+      /* ---------- intro ---------- */
+      .intro {
+        padding: 0 0 20px;
+        text-align: center;
+      }
+      .intro p {
+        max-width: 660px;
+        margin: 0 auto;
+        font-size: clamp(15px, 4vw, 17px);
+        color: var(--parchment-dim);
+      }
+
+      /* ---------- feature mosaic ---------- */
+      .mosaic {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        overflow: hidden;
+        margin-top: clamp(32px, 8vw, 52px);
+      }
+      .tile {
+        background: var(--panel);
+        padding: clamp(24px, 5vw, 34px) clamp(16px, 4vw, 26px);
+        text-align: right;
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+          opacity 0.6s ease,
+          transform 0.6s ease,
+          background 0.3s ease;
+      }
+      .tile:nth-child(3n + 2) {
+        background: #141f27;
+      }
+      .tile:nth-child(3n) {
+        background: var(--panel-2);
+      }
+      .tile.in {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .tile:hover {
+        background: #1c2b34;
+      }
+      .tile .star {
+        width: 26px;
+        height: 26px;
+        color: var(--gold);
+        margin-bottom: 16px;
+      }
+      .tile h3 {
+        font-family: 'Reem Kufi', sans-serif;
+        font-size: clamp(16px, 4vw, 18px);
+        font-weight: 600;
+        margin: 0 0 10px;
+        color: var(--parchment);
+      }
+      .tile p {
+        font-size: clamp(13px, 3.5vw, 14.5px);
+        color: var(--parchment-dim);
+        margin: 0;
+      }
+
+      @media (max-width: 860px) {
+        .mosaic {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 560px) {
+        .mosaic {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* ---------- preview / arch frame ---------- */
+      .preview {
+        padding: 20px 0 10px;
+        display: flex;
+        justify-content: center;
+      }
+      .arch-frame {
+        position: relative;
+        width: min(300px, 85vw);
+        padding: 22px 22px 34px;
+        background: linear-gradient(180deg, #16232b, #101a21);
+        border: 1px solid var(--line);
+        border-radius: 150px 150px 26px 26px;
+        box-shadow: var(--shadow);
+      }
+      .arch-frame::before,
+      .arch-frame::after {
+        content: '';
+        position: absolute;
+        top: 44px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--gold);
+        opacity: 0.55;
+      }
+      .arch-frame::before {
+        right: 20px;
+      }
+      .arch-frame::after {
+        left: 20px;
+      }
+
+      .phone-screen {
+        background: var(--ink);
+        border-radius: 120px 120px 18px 18px;
+        padding: 34px 18px 20px;
+        text-align: center;
+        border: 1px solid rgba(127, 227, 192, 0.15);
+      }
+      .phone-screen .mini-star {
+        width: 34px;
+        height: 34px;
+        color: var(--mint);
+        margin: 0 auto 14px;
+      }
+      .phone-screen h4 {
+        font-family: 'Amiri', serif;
+        color: var(--parchment);
+        font-size: clamp(18px, 5vw, 20px);
+        margin: 0 0 6px;
+      }
+      .phone-screen .streak {
+        font-size: 12px;
+        color: var(--parchment-dim);
+        margin-bottom: 20px;
+      }
+      .mini-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .mini-card {
+        background: #141f27;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: clamp(11px, 3vw, 12px);
+        color: var(--parchment-dim);
+      }
+      .mini-card b {
+        color: var(--parchment);
+        font-weight: 600;
+      }
+      .mini-card.done {
+        border-color: var(--mint);
+        color: var(--mint);
+      }
+
+      /* ---------- download section ---------- */
+      .download {
+        text-align: center;
+        padding-bottom: 10px;
+      }
+      .store-row {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 36px 0 30px;
+      }
+      .store-btn {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 24px;
+        background: var(--panel);
+        border: 1px dashed var(--line);
+        border-radius: 14px;
+        width: 100%;
+        max-width: 240px;
+        text-align: right;
+        cursor: default;
+      }
+      .store-btn .glyph {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gold);
+        flex-shrink: 0;
+      }
+      .store-btn .label-lg {
+        font-family: 'Reem Kufi', sans-serif;
+        font-size: 15px;
+        color: var(--parchment);
+        display: block;
+      }
+      .store-btn .label-sm {
+        font-size: 11.5px;
+        color: var(--parchment-dim);
+        display: block;
+        margin-top: 2px;
+      }
+
+      .notify {
+        max-width: 440px;
+        margin: 0 auto;
+        padding: clamp(20px, 5vw, 26px) clamp(16px, 5vw, 28px);
+        background: var(--panel-2);
+        border: 1px solid rgba(127, 227, 192, 0.2);
+        border-radius: 18px;
+      }
+      .notify p {
+        margin: 0 0 16px;
+        font-size: clamp(13px, 3.5vw, 14.5px);
+        color: var(--parchment-dim);
+      }
+      .notify form {
+        display: flex;
+        gap: 10px;
+      }
+      .notify input[type='email'] {
+        flex: 1;
+        background: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 12px 14px;
+        color: var(--parchment);
+        font-family: 'Tajawal', sans-serif;
+        font-size: 14px;
+      }
+      .notify input[type='email']::placeholder {
+        color: var(--parchment-dim);
+        opacity: 0.6;
+      }
+      .notify button {
+        background: var(--mint);
+        color: var(--ink);
+        border: none;
+        border-radius: 10px;
+        padding: 0 20px;
+        font-family: 'Tajawal', sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+      }
+      .notify button:hover {
+        opacity: 0.88;
+      }
+
+      @media (max-width: 480px) {
+        .notify form {
+          flex-direction: column;
+        }
+        .notify button {
+          padding: 12px 20px;
+        }
+      }
+
+      /* ---------- footer ---------- */
+      footer {
+        padding: clamp(50px, 8vw, 70px) 0 clamp(30px, 5vw, 40px);
+        text-align: center;
+        border-top: 1px solid var(--line);
+        margin-top: clamp(40px, 8vw, 60px);
+      }
+      .dua {
+        font-family: 'Amiri', serif;
+        font-style: italic;
+        font-size: clamp(16px, 4vw, 19px);
+        color: var(--gold-bright);
+        max-width: 520px;
+        margin: 0 auto 28px;
+        line-height: 1.9;
+      }
+      .foot-links {
+        display: flex;
+        gap: 26px;
+        justify-content: center;
+        flex-wrap: wrap;
+        font-size: clamp(12px, 3.5vw, 13.5px);
+        color: var(--parchment-dim);
+        margin-bottom: 20px;
+      }
+      .foot-links a {
+        text-decoration: none;
+      }
+      .foot-links a:hover {
+        color: var(--mint);
+      }
+      .copyright {
+        font-size: 12px;
+        color: var(--parchment-dim);
+        opacity: 0.55;
+      }
+
+      section {
+        padding: clamp(56px, 10vw, 80px) 0;
+      }
+
+      @media (max-width: 640px) {
+        .hero {
+          padding-top: 120px;
+          padding-bottom: 60px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <a class="brand" href="#top">
+          <span class="star" aria-hidden="true">
+            <svg viewBox="0 0 100 100"><use href="#khatam" /></svg>
+          </span>
+          سكينة
+        </a>
+        <a
+          class="nav-cta"
+          href="https://expo.dev/artifacts/eas/jHyiVZd9Kc5DgVxNUR12XPpaVTbMRlWOAz3AkxxAizw.apk"
+          target="_blank"
+          rel="noopener noreferrer"
+          >حمّل التطبيق</a
+        >
+      </div>
+    </header>
+
+    <!-- shared star symbol -->
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <g id="khatam-shape">
+          <path
+            fill="currentColor"
+            d="M50 2 L61 32 L92 24 L69 47 L98 55 L67 61 L78 90 L50 71 L22 90 L33 61 L2 55 L31 47 L8 24 L39 32 Z"
+          />
+        </g>
+      </defs>
+    </svg>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-field" aria-hidden="true"></div>
+        <svg
+          class="hero-pattern"
+          aria-hidden="true"
+          viewBox="0 0 800 800"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <g opacity="0.5" fill="none" stroke="#C9A227" stroke-width="0.6">
+            <g id="ring1">
+              <use
+                href="#khatam-shape"
+                x="0"
+                y="0"
+                width="60"
+                height="60"
+                transform="translate(60,60)"
+                fill="#C9A227"
+                opacity="0.18"
+                stroke="none"
+              />
+            </g>
+          </g>
+          <g fill="#C9A227" opacity="0.14">
+            <use href="#khatam-shape" width="70" height="70" transform="translate(60,120)" />
+            <use href="#khatam-shape" width="50" height="50" transform="translate(620,80)" />
+            <use href="#khatam-shape" width="90" height="90" transform="translate(660,560)" />
+            <use href="#khatam-shape" width="46" height="46" transform="translate(90,600)" />
+            <use href="#khatam-shape" width="60" height="60" transform="translate(370,700)" />
+            <use href="#khatam-shape" width="40" height="40" transform="translate(400,40)" />
+          </g>
+        </svg>
+
+        <div>
+          <p class="eyebrow">
+            <span class="star"
+              ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+            ></span>
+            رفيقك اليومي للطمأنينة
+            <span class="star"
+              ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+            ></span>
+          </p>
+
+          <h1>سكينة</h1>
+
+          <p class="verse">﴿ أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ ﴾</p>
+          <p class="verse-ref">صدق الله العظيم — سورة الرعد، آية ٢٨</p>
+
+          <p class="tagline">
+            أذكار الصباح والمساء، مواعيد الصلاة، القبلة، والقرآن الكريم — في تطبيق واحد هادئ، بلا
+            إعلانات وبلا تشتيت.
+          </p>
+
+          <div class="cta-row">
+            <a
+              class="arch-btn primary"
+              href="https://expo.dev/artifacts/eas/jHyiVZd9Kc5DgVxNUR12XPpaVTbMRlWOAz3AkxxAizw.apk"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span class="big">حمّل الآن</span>
+              <span class="small">مجانًا بالكامل</span>
+            </a>
+            <a class="arch-btn" href="#features">
+              <span class="big kufi">تعرّف على المميزات</span>
+              <span class="small">تسعة أدوات في مكان واحد</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider" aria-hidden="true">
+        <span class="line"></span>
+        <span class="star"
+          ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+        ></span>
+        <span class="line"></span>
+      </div>
+
+      <section class="intro">
+        <div class="wrap">
+          <div class="section-title">
+            <p class="eyebrow">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              لماذا سكينة
+            </p>
+            <h2>مساحة هادئة وسط الزحمة</h2>
+            <p>
+              مفيش إشعارات دعائية، مفيش تتبّع، مفيش تشتيت. بس أنت، وذكرك، ووِردك، في تصميم مريح
+              للعين وقريب من قلبك.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider" aria-hidden="true">
+        <span class="line"></span>
+        <span class="star"
+          ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+        ></span>
+        <span class="line"></span>
+      </div>
+
+      <section id="features">
+        <div class="wrap">
+          <div class="section-title">
+            <p class="eyebrow">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              المميزات
+            </p>
+            <h2>كل اللي محتاجه في يومك</h2>
+            <p>تسعة أدوات مبنية بعناية، تشتغل مع بعض بسلاسة.</p>
+          </div>
+
+          <div class="mosaic" id="mosaic">
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>أذكار الصباح والمساء</h3>
+              <p>صباح، مساء، نوم، بعد الصلاة، ودعاء الكرب — بعداد تكرار وفضل كل ذكر.</p>
+            </div>
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>مواعيد الصلاة</h3>
+              <p>حساب دقيق لموقعك، مع عداد تنازلي للصلاة القادمة وتذكيرات مخصّصة.</p>
+            </div>
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>اتجاه القبلة</h3>
+              <p>بوصلة حيّة تعتمد على حساسات جهازك، تدلّك على القبلة أينما كنت.</p>
+            </div>
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>القرآن الكريم</h3>
+              <p>قراءة وتصفح مريح، حفظ تلقائي لآخر موضع، وختمة قابلة للمتابعة يوم بيوم.</p>
+            </div>
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>تلاوة صوتية</h3>
+              <p>استمع للسورة كاملة بصوت الشيخ مشاري العفاسي مباشرة من شاشة القراءة.</p>
+            </div>
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>تسبيح عام</h3>
+              <p>سبحة إلكترونية بأهداف قابلة للاختيار، واهتزاز خفيف عند كل ضغطة.</p>
+            </div>
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>وضع رمضان</h3>
+              <p>ميعادي الإمساك والإفطار يظهروا تلقائيًا، مع عد تنازلي لكل واحد.</p>
+            </div>
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>مشاركة كصورة</h3>
+              <p>حوّل أي ذكر أو آية لصورة مصمّمة بعناية، وشاركها مع اللي بتحبه.</p>
+            </div>
+            <div class="tile">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              <h3>الإحصائيات</h3>
+              <p>تابع استمرارك أسبوعيًا، وشوف مجموع أذكارك وتسبيحك وختمتك.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider" aria-hidden="true">
+        <span class="line"></span>
+        <span class="star"
+          ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+        ></span>
+        <span class="line"></span>
+      </div>
+
+      <section class="preview">
+        <div class="arch-frame">
+          <div class="phone-screen">
+            <span class="mini-star"
+              ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+            ></span>
+            <h4>صباح الخير</h4>
+            <p class="streak">استمرار ١٢ يوم 🔥</p>
+            <div class="mini-row">
+              <div class="mini-card done"><b>أذكار الصباح</b><span>✓</span></div>
+              <div class="mini-card"><b>الفجر</b><span>بعد ٤٢ د</span></div>
+              <div class="mini-card"><b>ورد الختمة</b><span>٪٦٤</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider" aria-hidden="true">
+        <span class="line"></span>
+        <span class="star"
+          ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+        ></span>
+        <span class="line"></span>
+      </div>
+
+      <section class="download" id="download">
+        <div class="wrap">
+          <div class="section-title">
+            <p class="eyebrow">
+              <span class="star"
+                ><svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg
+              ></span>
+              التحميل
+            </p>
+            <h2>سكينة في جيبك</h2>
+            <p>التطبيق دلوقتي بيتجهّز على المتاجر — سجّل إيميلك وهنبعتلك أول ما يتاح.</p>
+          </div>
+
+          <div class="store-row">
+            <div class="store-btn" role="note" aria-label="قريبًا على App Store">
+              <span class="glyph">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                  <path
+                    d="M16.365 1.43c0 1.14-.42 2.196-1.245 3.156-.99 1.14-2.19 1.8-3.495 1.695a3.68 3.68 0 0 1-.03-.435c0-1.095.48-2.235 1.29-3.135.855-.96 2.145-1.65 3.315-1.71.03.15.03.3.03.43zm4.605 15.735c-.315.75-.69 1.44-1.14 2.1-.615.9-1.125 1.53-1.515 1.875-.6.57-1.245.855-1.935.87-.495 0-1.095-.15-1.785-.45-.69-.3-1.32-.45-1.905-.45-.615 0-1.26.15-1.95.45-.69.3-1.245.465-1.68.48-.66.03-1.32-.27-1.965-.9-.42-.375-.96-1.02-1.605-1.965-.69-1.02-1.26-2.19-1.71-3.51-.48-1.44-.72-2.835-.72-4.185 0-1.53.33-2.85.99-3.96.51-.885 1.2-1.59 2.07-2.115a5.6 5.6 0 0 1 2.775-.81c.525 0 1.215.165 2.085.51.87.345 1.425.51 1.665.51.18 0 .81-.195 1.875-.585 1.005-.36 1.86-.51 2.55-.45 1.905.15 3.33.9 4.29 2.265-1.71 1.035-2.55 2.475-2.535 4.32.015 1.44.51 2.64 1.5 3.6.45.42.945.75 1.5.99-.12.36-.255.72-.39 1.08z"
+                  />
+                </svg>
+              </span>
+              <span>
+                <span class="label-sm">قريبًا على</span>
+                <span class="label-lg">App Store</span>
+              </span>
+            </div>
+            <div class="store-btn" role="note" aria-label="قريبًا على Google Play">
+              <span class="glyph">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+                  <path
+                    d="M3.6 2.4c-.35.35-.55.85-.55 1.45v16.3c0 .6.2 1.1.55 1.45l.1.1L12.9 12v-.2L3.7 2.3l-.1.1zm14.15 7.95L14.9 12l2.85 1.65 3.3-1.9c.9-.5.9-1.9 0-2.4l-3.3-1.9zM4.7 21.7l8.5-8.5-2.35-2.35-8.6 9.1c.25.15.75.15 1.4-.05l1.05-.2zm8.2-9.7l2.35-2.35-8.5-8.5-1.05-.2c-.65-.2-1.15-.2-1.4-.05l8.6 9.1z"
+                  />
+                </svg>
+              </span>
+              <span>
+                <span class="label-sm">قريبًا على</span>
+                <span class="label-lg">Google Play</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="notify">
+            <p>نبّهني عند الإطلاق</p>
+            <form action="mailto:boodapro540@gmail.com" method="post" enctype="text/plain">
+              <input
+                type="email"
+                name="email"
+                placeholder="بريدك الإلكتروني"
+                required
+                aria-label="البريد الإلكتروني"
+              />
+              <button type="submit">نبّهني</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <span
+          class="star"
+          style="
+            width: 22px;
+            height: 22px;
+            color: var(--gold);
+            display: inline-block;
+            margin-bottom: 22px;
+          "
+        >
+          <svg viewBox="0 0 100 100"><use href="#khatam-shape" fill="currentColor" /></svg>
+        </span>
+        <p class="dua">اللهم اجعل القرآن ربيع قلوبنا، ونور صدورنا، وجلاء أحزاننا</p>
+        <div class="foot-links">
+          <a href="mailto:boodapro540@gmail.com">تواصل معنا</a>
+          <a
+            href="https://fragrant-wildflower-3e36.boodapro540.workers.dev/privacy"
+            target="_blank"
+            rel="noopener"
+            >سياسة الخصوصية</a
+          >
+        </div>
+        <p class="copyright">سكينة — جميع الحقوق محفوظة</p>
+      </div>
+    </footer>
+
+    <script>
+      const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const tiles = document.querySelectorAll('.tile');
+
+      if (prefersReduced) {
+        tiles.forEach((t) => t.classList.add('in'));
+      } else if ('IntersectionObserver' in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry, i) => {
+              if (entry.isIntersecting) {
+                setTimeout(() => entry.target.classList.add('in'), i * 40);
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.15 }
+        );
+        tiles.forEach((t) => io.observe(t));
+      } else {
+        tiles.forEach((t) => t.classList.add('in'));
+      }
+    </script>
+  </body>
+</html>
